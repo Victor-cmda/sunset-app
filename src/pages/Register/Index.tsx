@@ -1,17 +1,24 @@
 import React, { useState, forwardRef } from "react";
-import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
-import Container from "@mui/material/Container";
-import Avatar from "@mui/material/Avatar";
+import {
+  Box,
+  Grid,
+  Button,
+  TextField,
+  Typography,
+  Container,
+  Avatar,
+  Snackbar,
+  Stack,
+  createTheme,
+  ThemeProvider,
+} from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import Snackbar from "@mui/material/Snackbar";
-import Stack from "@mui/material/Stack";
-import MuiAlert, { AlertProps } from "@mui/material/Alert";
 import { useNavigate } from "react-router-dom";
+import MuiAlert, { AlertProps } from "@mui/material/Alert";
+import { Formik, Form, Field, FormikProps } from "formik";
+import * as Yup from "yup";
+import axios from "axios";
+import { registerUser } from "../../services/apiService";
 
 const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
   props,
@@ -37,15 +44,57 @@ const boxstyle = {
   boxShadow: 24,
 };
 
+const validationSchema = Yup.object({
+  name: Yup.string()
+    .max(100, "O nome deve ter menos de 200 caracteres")
+    .required("Informe o nome do usuário"),
+  email: Yup.string()
+    .email("Informe um endereço de email válido")
+    .max(100, "O endereço de email deve ter menos de 200 caracteres")
+    .required("Informe um endereço de email"),
+  password: Yup.string()
+    .min(6, "A senha deve ter no mínimo 6 caracteres")
+    .max(50, "A senha deve ter no máximo 50 caracteres")
+    .required("Informe uma senha"),
+  passwordConfirmation: Yup.string()
+    .oneOf([Yup.ref("password")], "As senhas devem coincidir")
+    .min(6, "A confirmação de senha deve ter no mínimo 6 caracteres")
+    .max(50, "A confirmação de senha deve ter no máximo 50 caracteres")
+    .required("Informe a confirmação de senha"),
+});
+
+interface RegisterFormValues {
+  name: string;
+  email: string;
+  password: string;
+  passwordConfirmation: string;
+}
+
 export default function Register() {
   const [open, setOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | string[]>("");
   const vertical = "top";
   const horizontal = "right";
   const navigate = useNavigate();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    setOpen(true);
-    event.preventDefault();
+  const handleSubmit = async (values: RegisterFormValues) => {
+    const { name, email, password, passwordConfirmation } = values;
+    try {
+      await registerUser({ name, email, password, passwordConfirmation });
+      navigate("/login");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response) {
+        const apiError = error.response.data as {
+          message: string | string[];
+          statusCode: number;
+        };
+        setErrorMessage(apiError.message);
+      } else {
+        const errorMessage = (error as Error).message;
+        setErrorMessage(errorMessage);
+      }
+      setOpen(true);
+    }
   };
 
   const handleClose = (
@@ -67,7 +116,7 @@ export default function Register() {
         anchorOrigin={{ vertical, horizontal }}
       >
         <Alert onClose={handleClose} severity="warning" sx={{ width: "100%" }}>
-          Alerta! Usuário ou senha inválidos.
+          {Array.isArray(errorMessage) ? errorMessage.join(", ") : errorMessage}
         </Alert>
       </Snackbar>
       <div
@@ -137,92 +186,114 @@ export default function Register() {
                         Criar uma nova conta
                       </Typography>
                     </Box>
-                    <Box
-                      component="form"
-                      noValidate
+                    <Formik<RegisterFormValues>
+                      initialValues={{
+                        name: "",
+                        email: "",
+                        password: "",
+                        passwordConfirmation: "",
+                      }}
+                      validationSchema={validationSchema}
                       onSubmit={handleSubmit}
-                      sx={{ mt: 5 }}
                     >
-                      <Grid container spacing={1}>
-                        <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
-                          <TextField
-                            required
-                            fullWidth
-                            id="name"
-                            label="Nome"
-                            name="name"
-                            autoComplete="name"
-                          />
-                        </Grid>
-                        <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
-                          <TextField
-                            required
-                            fullWidth
-                            id="email"
-                            label="E-mail"
-                            name="email"
-                            autoComplete="email"
-                          />
-                        </Grid>
-                        <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
-                          <TextField
-                            required
-                            fullWidth
-                            name="password"
-                            label="Senha"
-                            type="password"
-                            id="password"
-                            autoComplete="new-password"
-                          />
-                        </Grid>
-                        <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
-                          <TextField
-                            required
-                            fullWidth
-                            name="confirmpassword"
-                            label="Confirmar senha"
-                            type="password"
-                            id="confirmpassword"
-                            autoComplete="new-password"
-                          />
-                        </Grid>
-                        <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
-                          <Button
-                            type="submit"
-                            variant="contained"
-                            fullWidth
-                            size="large"
-                            sx={{
-                              mt: "15px",
-                              mr: "20px",
-                              color: "#ffffff",
-                              minWidth: "170px",
-                            }}
-                          >
-                            Registrar-se
-                          </Button>
-                        </Grid>
-                        <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
-                          <Stack direction="row" spacing={2}>
-                            <Typography
-                              variant="body1"
-                              component="span"
-                              style={{ marginTop: "10px" }}
-                            >
-                              Já tem um conta?{" "}
-                              <span
-                                style={{ color: "#91b3fa", cursor: "pointer" }}
-                                onClick={() => {
-                                  navigate("/login");
+                      {({
+                        errors,
+                        touched,
+                      }: FormikProps<RegisterFormValues>) => (
+                        <Form noValidate>
+                          <Grid container spacing={1}>
+                            <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
+                              <Field
+                                as={TextField}
+                                name="name"
+                                label="Nome"
+                                fullWidth
+                                error={touched.name && Boolean(errors.name)}
+                                helperText={touched.name && errors.name}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
+                              <Field
+                                as={TextField}
+                                name="email"
+                                label="E-mail"
+                                fullWidth
+                                error={touched.email && Boolean(errors.email)}
+                                helperText={touched.email && errors.email}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
+                              <Field
+                                as={TextField}
+                                name="password"
+                                label="Senha"
+                                type="password"
+                                fullWidth
+                                error={
+                                  touched.password && Boolean(errors.password)
+                                }
+                                helperText={touched.password && errors.password}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
+                              <Field
+                                as={TextField}
+                                name="passwordConfirmation"
+                                label="Confirmar senha"
+                                type="password"
+                                fullWidth
+                                error={
+                                  touched.passwordConfirmation &&
+                                  Boolean(errors.passwordConfirmation)
+                                }
+                                helperText={
+                                  touched.passwordConfirmation &&
+                                  errors.passwordConfirmation
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
+                              <Button
+                                type="submit"
+                                variant="contained"
+                                fullWidth
+                                size="large"
+                                sx={{
+                                  mt: "15px",
+                                  mr: "20px",
+                                  color: "#ffffff",
+                                  minWidth: "170px",
                                 }}
                               >
-                                Acessar conta
-                              </span>
-                            </Typography>
-                          </Stack>
-                        </Grid>
-                      </Grid>
-                    </Box>
+                                Registrar-se
+                              </Button>
+                            </Grid>
+                            <Grid item xs={12} sx={{ ml: "3em", mr: "3em" }}>
+                              <Stack direction="row" spacing={2}>
+                                <Typography
+                                  variant="body1"
+                                  component="span"
+                                  style={{ marginTop: "10px" }}
+                                >
+                                  Já tem um conta?{" "}
+                                  <span
+                                    style={{
+                                      color: "#91b3fa",
+                                      cursor: "pointer",
+                                    }}
+                                    onClick={() => {
+                                      navigate("/login");
+                                    }}
+                                  >
+                                    Acessar conta
+                                  </span>
+                                </Typography>
+                              </Stack>
+                            </Grid>
+                          </Grid>
+                        </Form>
+                      )}
+                    </Formik>
                   </Container>
                 </ThemeProvider>
               </Box>

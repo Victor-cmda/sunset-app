@@ -1,36 +1,61 @@
-import React from "react";
+import React, { useState } from "react";
 import TodoItem from "../TodoItem";
+import { Button, TextField, Box } from "@mui/material";
 
 interface TodoListProps {
   items: {
     id: number;
-    text: string;
-    completed: boolean;
-    important: boolean;
+    name: string;
+    isDone: boolean;
   }[];
   onToggleComplete: (id: number) => void;
-  onToggleImportant: (id: number) => void;
+  onAddItem: (text: string) => Promise<void>;
+  onDeleteItem: (id: number) => Promise<void>;
 }
 
-const TodoList: React.FC<TodoListProps> = ({
+const TodoListComponent: React.FC<TodoListProps> = ({
   items,
   onToggleComplete,
-  onToggleImportant,
+  onAddItem,
 }) => {
+  const [newItemText, setNewItemText] = useState("");
+
+  const handleAddItem = async () => {
+    if (newItemText.trim() !== "") {
+      await onAddItem(newItemText);
+      setNewItemText("");
+    }
+  };
+
   return (
-    <div>
-      {items.map((item) => (
-        <TodoItem
-          key={item.id}
-          text={item.text}
-          completed={item.completed}
-          important={item.important}
-          onToggleComplete={() => onToggleComplete(item.id)}
-          onToggleImportant={() => onToggleImportant(item.id)}
+    <Box>
+      <Box mb={2} display="flex" alignItems="center">
+        <TextField
+          type="text"
+          value={newItemText}
+          onChange={(e) => setNewItemText(e.target.value)}
+          placeholder="Novo item"
+          size="small"
+          variant="outlined"
+          fullWidth
+          sx={{ mr: 2 }}
         />
-      ))}
-    </div>
+        <Button variant="contained" color="primary" onClick={handleAddItem}>
+          Adicionar
+        </Button>
+      </Box>
+      <Box>
+        {items.map((item) => (
+          <TodoItem
+            key={item.id}
+            name={item.name}
+            isDone={item.isDone}
+            onToggleComplete={() => onToggleComplete(item.id)}
+          />
+        ))}
+      </Box>
+    </Box>
   );
 };
 
-export default TodoList;
+export default TodoListComponent;

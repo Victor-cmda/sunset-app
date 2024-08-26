@@ -2,21 +2,14 @@ import { ContactMail, Home, Info } from "@mui/icons-material";
 import {
   Avatar,
   Box,
-  Button,
   Container,
   Grid,
   IconButton,
-  Modal,
   Paper,
   Typography,
 } from "@mui/material";
-import React from "react";
-
 
 function HomePage() {
-  const [open, setOpen] = React.useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
   return (
     <div>
       <Box
@@ -29,20 +22,14 @@ function HomePage() {
       >
         <Container maxWidth="md">
           <Typography variant="h2" component="h1" gutterBottom>
-            Welcome to My Website
+            Bem vindo ao Sunset to-do
           </Typography>
           <Typography variant="h5" component="p" gutterBottom>
-            This is a simple hero unit, a simple jumbotron-style component for
-            calling extra attention to featured content or information.
+            Com este sistema, você pode organizar suas tarefas de forma
+            eficiente, criar listas personalizadas e acompanhar o progresso das
+            suas atividades diárias. Seja para uso pessoal ou profissional, o
+            Sunset To-Do foi criado para ajudar você a manter tudo sob controle.
           </Typography>
-          <Button
-            variant="contained"
-            color="secondary"
-            size="large"
-            sx={{ mt: 4 }}
-          >
-            Learn More
-          </Button>
         </Container>
       </Box>
 
@@ -56,11 +43,10 @@ function HomePage() {
                 </Avatar>
               </IconButton>
               <Typography variant="h5" component="h3" sx={{ mt: 2 }}>
-                Home
+                Página Inicial
               </Typography>
               <Typography variant="body1">
-                This is the home section, where you can find the latest updates
-                and news.
+                Essa é a página inicial do sistema, onde você pode visualizar
               </Typography>
             </Paper>
           </Grid>
@@ -72,10 +58,10 @@ function HomePage() {
                 </Avatar>
               </IconButton>
               <Typography variant="h5" component="h3" sx={{ mt: 2 }}>
-                About
+                Atividades
               </Typography>
               <Typography variant="body1">
-                Learn more about what we do and our mission.
+                Cadastre suas atividades e acompanhe o progresso de cada uma
               </Typography>
             </Paper>
           </Grid>
@@ -87,30 +73,14 @@ function HomePage() {
                 </Avatar>
               </IconButton>
               <Typography variant="h5" component="h3" sx={{ mt: 2 }}>
-                Contact
+                Sobre
               </Typography>
               <Typography variant="body1">
-                Get in touch with us for more information.
+                Saiba mais sobre o sistema e sua funcionalidade
               </Typography>
             </Paper>
           </Grid>
         </Grid>
-        <Button onClick={handleOpen}>Open modal</Button>
-        <Modal
-          open={open}
-          onClose={handleClose}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <Box>
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-              Text in a modal
-            </Typography>
-            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-              Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
-            </Typography>
-          </Box>
-        </Modal>
       </Container>
     </div>
   );

@@ -1,36 +1,39 @@
 import React from "react";
-import { Card, CardContent, Checkbox, IconButton, Typography, Box } from "@mui/material";
-import { Star, StarBorder, Event, Notifications, Loop } from "@mui/icons-material";
+import {
+  Card,
+  CardContent,
+  Checkbox,
+  IconButton,
+  Typography,
+  Box,
+} from "@mui/material";
+import { Event, Notifications, Loop } from "@mui/icons-material";
 
 interface TodoItemProps {
-  text: string;
-  completed: boolean;
-  important: boolean;
+  name: string;
+  isDone: boolean;
   onToggleComplete: () => void;
-  onToggleImportant: () => void;
 }
 
 const TodoItem: React.FC<TodoItemProps> = ({
-  text,
-  completed,
-  important,
+  name,
+  isDone,
   onToggleComplete,
-  onToggleImportant,
 }) => {
   return (
     <Card sx={{ mb: 2 }}>
       <CardContent sx={{ display: "flex", alignItems: "center" }}>
         <Checkbox
-          checked={completed}
+          checked={isDone}
           onChange={onToggleComplete}
-          sx={{ color: completed ? "primary.main" : "default" }}
+          sx={{ color: isDone ? "primary.main" : "default" }}
         />
         <Box sx={{ flexGrow: 1 }}>
           <Typography
             variant="body1"
-            sx={{ textDecoration: completed ? "line-through" : "none" }}
+            sx={{ textDecoration: isDone ? "line-through" : "none" }}
           >
-            {text}
+            {name}
           </Typography>
           <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
             <IconButton>
@@ -44,9 +47,6 @@ const TodoItem: React.FC<TodoItemProps> = ({
             </IconButton>
           </Box>
         </Box>
-        <IconButton onClick={onToggleImportant}>
-          {important ? <Star color="primary" /> : <StarBorder />}
-        </IconButton>
       </CardContent>
     </Card>
   );

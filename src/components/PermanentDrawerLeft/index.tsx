@@ -8,21 +8,43 @@ import {
   IconButton,
   Divider,
   Box,
+  ListItemIcon,
 } from "@mui/material";
-import { MenuOutlined } from "@mui/icons-material";
+import {
+  Add,
+  Delete,
+  Edit,
+  EventNote,
+  MenuOutlined,
+} from "@mui/icons-material";
 
 interface PermanentDrawerLeftProps {
-  todoLists: { id: number; title: string }[];
+  todoLists: { id: number; name: string; color: string }[];
   selectedListId: number;
   onSelectList: (id: number) => void;
+  onAddListClick: () => void;
+  onDeleteListClick: (id: number) => void;
+  onEditListClick: (id: number) => void;
 }
 
 const drawerWidth = 240;
+
+function getContrastYIQ(hexcolor: string) {
+  hexcolor = hexcolor.replace("#", "");
+  const r = parseInt(hexcolor.substring(0, 2), 16);
+  const g = parseInt(hexcolor.substring(2, 4), 16);
+  const b = parseInt(hexcolor.substring(4, 6), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "black" : "white";
+}
 
 const PermanentDrawerLeft: React.FC<PermanentDrawerLeftProps> = ({
   todoLists,
   selectedListId,
   onSelectList,
+  onAddListClick,
+  onDeleteListClick,
+  onEditListClick,
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -37,16 +59,65 @@ const PermanentDrawerLeft: React.FC<PermanentDrawerLeftProps> = ({
       </Typography>
       <Divider />
       <List>
-        {todoLists.map((list) => (
-          <ListItem
-            button
-            key={list.id}
-            selected={list.id === selectedListId}
-            onClick={() => onSelectList(list.id)}
-          >
-            <ListItemText primary={list.title} />
-          </ListItem>
-        ))}
+        <ListItem button color="primary" onClick={onAddListClick}>
+          <ListItemIcon>
+            <Add />
+          </ListItemIcon>
+          <ListItemText primary="Adicionar" />
+        </ListItem>
+        {todoLists.map((list) => {
+          const textColor = getContrastYIQ(list.color);
+
+          return (
+            <ListItem
+              button
+              key={list.id}
+              selected={list.id === selectedListId}
+              onClick={() => onSelectList(list.id)}
+              sx={{
+                backgroundColor: list.color,
+                color: textColor,
+                "& .MuiListItemText-root": {
+                  color: textColor,
+                },
+                "&.Mui-selected": {
+                  backgroundColor: list.color,
+                  opacity: 0.8,
+                },
+                "&:hover": {
+                  backgroundColor: list.color,
+                  opacity: 0.7,
+                },
+              }}
+            >
+              <ListItemIcon>
+                <EventNote sx={{ color: textColor }} />
+              </ListItemIcon>
+              <ListItemText primary={list.name} sx={{ fontWeight: "bold" }} />
+              <IconButton
+                edge="end"
+                aria-label="edit"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditListClick(list.id);
+                }}
+              >
+                <Edit sx={{ color: textColor }} />
+              </IconButton>
+              <IconButton
+                edge="end"
+                aria-label="delete"
+                sx={{ color: textColor }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteListClick(list.id);
+                }}
+              >
+                <Delete />
+              </IconButton>
+            </ListItem>
+          );
+        })}
       </List>
     </Box>
   );

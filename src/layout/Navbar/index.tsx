@@ -12,11 +12,11 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Divider,
 } from "@mui/material";
 import {
   LocalLibraryOutlined,
   MenuOutlined,
-  SupervisedUserCircleOutlined,
   TaskAltOutlined,
   WindowOutlined,
 } from "@mui/icons-material";
@@ -28,7 +28,6 @@ const NavBar: React.FC = () => {
 
   const menuItems = [
     { text: "Página Inicial", icon: <WindowOutlined />, path: "/" },
-    { text: "Usuários", icon: <SupervisedUserCircleOutlined />, path: "/usuarios" },
     { text: "Tarefas", icon: <TaskAltOutlined />, path: "/todos" },
   ];
 
@@ -87,6 +86,10 @@ const NavBar: React.FC = () => {
             <MenuOutlined />
           </IconButton>
           <Drawer anchor="left" open={Boolean(anchorNav)} onClose={closeMenu}>
+            <Typography variant="h5" component="h2" sx={{ padding: 2 }}>
+              To-Do Lists
+            </Typography>
+            <Divider />
             <List sx={{ width: 230 }}>
               {menuItems.map((item) => (
                 <ListItem key={item.text} disablePadding>

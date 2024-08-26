@@ -21,9 +21,10 @@ apiClient.interceptors.request.use(
 export default apiClient;
 
 interface RegisterData {
-  username: string;
+  name: string;
   email: string;
   password: string;
+  passwordConfirmation: string;
 }
 
 interface LoginData {
@@ -33,15 +34,15 @@ interface LoginData {
 
 interface TodoList {
   id: number;
-  title: string;
+  name: string;
+  color: string;
   items: TodoItem[];
 }
 
 interface TodoItem {
   id: number;
-  text: string;
-  completed: boolean;
-  important: boolean;
+  name: string;
+  isDone: boolean;
 }
 
 interface User {
@@ -73,12 +74,9 @@ const registerUser = async (data: RegisterData): Promise<string> => {
 const loginUser = async (data: LoginData): Promise<string> => {
   try {
     const response: AxiosResponse = await apiClient.post("/auth/login", data);
-    if (response.status === 200) {
-      // Armazenar token ou outras informações se necessário
-      // Exemplo: localStorage.setItem('token', response.data.token);
-      return "Usuário logado com sucesso";
-    }
-    throw new Error("Erro desconhecido durante o login");
+    localStorage.setItem("token", response.data.access_token);
+    localStorage.setItem("userId", response.data.user_id);
+    return "Usuário logado com sucesso";
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 400) {
@@ -92,15 +90,16 @@ const loginUser = async (data: LoginData): Promise<string> => {
   }
 };
 
-const addTodoList = async (title: string): Promise<string> => {
+const addTodoList = async (name: string, color: string): Promise<string> => {
   try {
+    console.log(name, color);
+    const userId = localStorage.getItem("userId");
     const response: AxiosResponse = await apiClient.post("/api/todos/list", {
-      title,
+      name,
+      color,
+      userId,
     });
-    if (response.status === 200) {
-      return "Lista de tarefas criada com sucesso";
-    }
-    throw new Error("Erro desconhecido ao criar lista de tarefas");
+    return `Lista de tarefas criada com sucesso, ID: ${response.data.id}`;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 400) {
@@ -113,11 +112,11 @@ const addTodoList = async (title: string): Promise<string> => {
 
 const getTodoLists = async (): Promise<TodoList[]> => {
   try {
-    const response: AxiosResponse = await apiClient.get("/api/todos/lists/");
-    if (response.status === 200) {
-      return response.data; // Supondo que response.data seja um array de TodoList
-    }
-    throw new Error("Erro desconhecido ao buscar listas de tarefas");
+    const userId = localStorage.getItem("userId");
+    const response: AxiosResponse = await apiClient.get(
+      `/api/todos/lists/${userId}`
+    );
+    return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 400) {
@@ -131,16 +130,18 @@ const getTodoLists = async (): Promise<TodoList[]> => {
   }
 };
 
-const updateTodoList = async (id: number, title: string): Promise<string> => {
+const updateTodoList = async (
+  id: number,
+  name: string,
+  color: string
+): Promise<string> => {
   try {
+    console.log(id, name, color);
     const response: AxiosResponse = await apiClient.put(
       `/api/todos/list/${id}`,
-      { title }
+      { name, color }
     );
-    if (response.status === 200) {
-      return "Lista de tarefas atualizada";
-    }
-    throw new Error("Erro desconhecido ao atualizar lista de tarefas");
+    return `Lista de tarefas atualizada, resposta API: ${response.data}`;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {
@@ -158,10 +159,7 @@ const deleteTodoList = async (id: number): Promise<string> => {
     const response: AxiosResponse = await apiClient.delete(
       `/api/todos/list/${id}`
     );
-    if (response.status === 204) {
-      return "Lista de tarefas deletada com sucesso";
-    }
-    throw new Error("Erro desconhecido ao deletar lista de tarefas");
+    return `Lista de tarefas deletada com sucesso, resposta API: ${response.data}`;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {
@@ -176,17 +174,14 @@ const deleteTodoList = async (id: number): Promise<string> => {
 
 const addTodoItem = async (
   listId: number,
-  item: Partial<TodoItem>
+  item: { name: string; isDone: boolean }
 ): Promise<string> => {
   try {
-    const response: AxiosResponse = await apiClient.post("/api/todos/item/", {
-      listId,
-      ...item,
-    });
-    if (response.status === 200) {
-      return "Item adicionado com sucesso";
-    }
-    throw new Error("Erro desconhecido ao adicionar item");
+    const response: AxiosResponse = await apiClient.post(
+      `/api/todos/item/${listId}`,
+      item
+    );
+    return `Item adicionado com sucesso {ID: ${response.data.id}}`;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 400) {
@@ -206,10 +201,7 @@ const updateTodoItem = async (
       `/api/todos/item/${itemId}`,
       updatedFields
     );
-    if (response.status === 200) {
-      return "Item atualizado com sucesso";
-    }
-    throw new Error("Erro desconhecido ao atualizar item");
+    return `Item atualizado com sucesso, resposta API: ${response.data}`;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {
@@ -225,10 +217,7 @@ const deleteTodoItem = async (itemId: number): Promise<string> => {
     const response: AxiosResponse = await apiClient.delete(
       `/api/todos/item/${itemId}`
     );
-    if (response.status === 204) {
-      return "Item deletado com sucesso";
-    }
-    throw new Error("Erro desconhecido ao deletar item");
+    return `Item deletado com sucesso, resposta API: ${response.data}`;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {
@@ -239,14 +228,11 @@ const deleteTodoItem = async (itemId: number): Promise<string> => {
   }
 };
 
-// Users Controller
 const getUserById = async (userId: number): Promise<User> => {
   try {
     const response: AxiosResponse = await apiClient.get(`/api/users/${userId}`);
-    if (response.status === 200) {
-      return response.data; // Supondo que response.data seja um objeto User
-    }
-    throw new Error("Erro desconhecido ao buscar usuário");
+    localStorage.setItem("userId", response.data.id);
+    return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {
@@ -266,10 +252,7 @@ const updateUser = async (
       `/api/users/${userId}`,
       updatedData
     );
-    if (response.status === 200) {
-      return "Usuário atualizado";
-    }
-    throw new Error("Erro desconhecido ao atualizar usuário");
+    return `Usuário atualizado, resposta API: ${response.data}`;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {
@@ -285,10 +268,7 @@ const deleteUser = async (userId: number): Promise<string> => {
     const response: AxiosResponse = await apiClient.delete(
       `/api/users/${userId}`
     );
-    if (response.status === 204) {
-      return "Usuário deletado";
-    }
-    throw new Error("Erro desconhecido ao deletar usuário");
+    return `Usuário deletado, resposta API: ${response.data}`;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {
@@ -299,7 +279,6 @@ const deleteUser = async (userId: number): Promise<string> => {
   }
 };
 
-// Exportar todas as funções
 export {
   registerUser,
   loginUser,
