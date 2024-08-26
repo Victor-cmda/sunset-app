@@ -10,20 +10,22 @@ interface TodoListProps {
   }[];
   onToggleComplete: (id: number) => void;
   onAddItem: (text: string) => Promise<void>;
-  onDeleteItem: (id: number) => Promise<void>;
+  onDeleteItem: (item: { id: number; name: string; isDone: boolean }) => void;
+  onEditItem: (item: { id: number; name: string; isDone: boolean }) => void;
 }
 
 const TodoListComponent: React.FC<TodoListProps> = ({
   items,
   onToggleComplete,
   onAddItem,
+  onDeleteItem,
+  onEditItem,
 }) => {
   const [newItemText, setNewItemText] = useState("");
 
   const handleAddItem = async () => {
     if (newItemText.trim() !== "") {
       await onAddItem(newItemText);
-      setNewItemText("");
     }
   };
 
@@ -51,6 +53,8 @@ const TodoListComponent: React.FC<TodoListProps> = ({
             name={item.name}
             isDone={item.isDone}
             onToggleComplete={() => onToggleComplete(item.id)}
+            onEdit={() => onEditItem(item)}
+            onDelete={() => onDeleteItem(item)}
           />
         ))}
       </Box>

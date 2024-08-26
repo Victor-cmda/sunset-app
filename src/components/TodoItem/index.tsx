@@ -3,22 +3,26 @@ import {
   Card,
   CardContent,
   Checkbox,
-  IconButton,
   Typography,
   Box,
+  IconButton,
 } from "@mui/material";
-import { Event, Notifications, Loop } from "@mui/icons-material";
+import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 
 interface TodoItemProps {
   name: string;
   isDone: boolean;
   onToggleComplete: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
 const TodoItem: React.FC<TodoItemProps> = ({
   name,
   isDone,
   onToggleComplete,
+  onEdit,
+  onDelete,
 }) => {
   return (
     <Card sx={{ mb: 2 }}>
@@ -35,18 +39,13 @@ const TodoItem: React.FC<TodoItemProps> = ({
           >
             {name}
           </Typography>
-          <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-            <IconButton>
-              <Event fontSize="small" />
-            </IconButton>
-            <IconButton>
-              <Notifications fontSize="small" />
-            </IconButton>
-            <IconButton>
-              <Loop fontSize="small" />
-            </IconButton>
-          </Box>
         </Box>
+        <IconButton color="primary" onClick={onEdit} aria-label="edit">
+          <EditIcon />
+        </IconButton>
+        <IconButton color="secondary" onClick={onDelete} aria-label="delete">
+          <DeleteIcon />
+        </IconButton>
       </CardContent>
     </Card>
   );

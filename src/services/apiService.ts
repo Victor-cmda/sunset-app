@@ -43,6 +43,7 @@ interface TodoItem {
   id: number;
   name: string;
   isDone: boolean;
+  listId: number;
 }
 
 interface User {
@@ -92,7 +93,6 @@ const loginUser = async (data: LoginData): Promise<string> => {
 
 const addTodoList = async (name: string, color: string): Promise<string> => {
   try {
-    console.log(name, color);
     const userId = localStorage.getItem("userId");
     const response: AxiosResponse = await apiClient.post("/api/todos/list", {
       name,
@@ -136,7 +136,6 @@ const updateTodoList = async (
   color: string
 ): Promise<string> => {
   try {
-    console.log(id, name, color);
     const response: AxiosResponse = await apiClient.put(
       `/api/todos/list/${id}`,
       { name, color }
@@ -179,7 +178,7 @@ const addTodoItem = async (
   try {
     const response: AxiosResponse = await apiClient.post(
       `/api/todos/item/${listId}`,
-      item
+      { name: item.name, isDone: item.isDone }
     );
     return `Item adicionado com sucesso {ID: ${response.data.id}}`;
   } catch (error: unknown) {

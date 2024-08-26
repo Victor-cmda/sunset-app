@@ -33,14 +33,12 @@ interface ITodoItem {
   id: number;
   name: string;
   isDone: boolean;
+  listId: number;
 }
 
 const TodoPage: React.FC = () => {
   const [todoLists, setTodoLists] = useState<ITodoList[]>([]);
   const [selectedListId, setSelectedListId] = useState<number | null>(null);
-
-  const [openItemDialog, setOpenItemDialog] = useState(false);
-  const [newItemText, setNewItemText] = useState("");
 
   const [openListDialog, setOpenListDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -50,6 +48,21 @@ const TodoPage: React.FC = () => {
 
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [listToDelete, setListToDelete] = useState<number | null>(null);
+
+  const [openEditItemDialog, setOpenEditItemDialog] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<{
+    id: number;
+    name: string;
+    isDone: boolean;
+  } | null>(null);
+  const [newItemName, setNewItemName] = useState("");
+
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{
+    id: number;
+    name: string;
+    isDone: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const fetchTodoLists = async () => {
@@ -98,7 +111,10 @@ const TodoPage: React.FC = () => {
         (item) => item.id === itemId
       );
       if (updatedItem) {
-        await updateTodoItem(itemId, { isDone: !updatedItem.isDone });
+        await updateTodoItem(itemId, {
+          name: updatedItem.name,
+          isDone: !updatedItem.isDone,
+        });
         setTodoLists((prevLists) =>
           prevLists.map((list) =>
             list.id === selectedList?.id
@@ -119,18 +135,17 @@ const TodoPage: React.FC = () => {
     }
   };
 
-  const handleAddTodoItem = async () => {
+  const handleAddTodoItem = async (itemText: string) => {
     if (selectedList) {
       try {
         const newItem = {
-          name: newItemText,
+          name: itemText,
           isDone: false,
+          listId: selectedList.id,
         };
-        await addTodoItem(selectedList.id, newItem);
+        await addTodoItem(newItem.listId, newItem);
         const updatedLists = await getTodoLists();
         setTodoLists(updatedLists);
-        setNewItemText("");
-        setOpenItemDialog(false);
       } catch (error) {
         console.error("Erro ao adicionar item à lista de tarefas:", error);
       }
@@ -144,6 +159,25 @@ const TodoPage: React.FC = () => {
       setTodoLists(updatedLists);
     } catch (error) {
       console.error("Erro ao deletar item da lista de tarefas:", error);
+    }
+  };
+
+  const handleEditTodoItem = async (itemId: number, newName: string) => {
+    try {
+      const updatedItem = selectedList?.items.find(
+        (item) => item.id === itemId
+      );
+      if (updatedItem) {
+        await updateTodoItem(itemId, {
+          name: newName,
+          isDone: updatedItem.isDone,
+          listId: updatedItem.listId,
+        });
+        const updatedLists = await getTodoLists();
+        setTodoLists(updatedLists);
+      }
+    } catch (error) {
+      console.error("Erro ao editar item:", error);
     }
   };
 
@@ -192,6 +226,41 @@ const TodoPage: React.FC = () => {
     }
   };
 
+  const handleOpenEditDialog = (item: {
+    id: number;
+    name: string;
+    isDone: boolean;
+  }) => {
+    setItemToEdit(item);
+    setNewItemName(item.name);
+    setOpenEditItemDialog(true);
+  };
+
+  const handleSaveItemChanges = async () => {
+    if (itemToEdit) {
+      await handleEditTodoItem(itemToEdit.id, newItemName);
+      setOpenEditItemDialog(false);
+      setItemToEdit(null);
+    }
+  };
+
+  const handleOpenDeleteDialog = (item: {
+    id: number;
+    name: string;
+    isDone: boolean;
+  }) => {
+    setItemToDelete(item);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleConfirmDeleteItem = async () => {
+    if (itemToDelete) {
+      await handleDeleteTodoItem(itemToDelete.id);
+      setOpenDeleteDialog(false);
+      setItemToDelete(null);
+    }
+  };
+
   return (
     <Box sx={{ display: "flex" }}>
       <PermanentDrawerLeft
@@ -216,12 +285,12 @@ const TodoPage: React.FC = () => {
               items={selectedList.items}
               onToggleComplete={handleToggleComplete}
               onAddItem={handleAddTodoItem}
-              onDeleteItem={handleDeleteTodoItem}
+              onDeleteItem={handleOpenDeleteDialog}
+              onEditItem={handleOpenEditDialog}
             />
           )}
         </Container>
       </Box>
-
       <Dialog open={openListDialog} onClose={() => setOpenListDialog(false)}>
         <DialogTitle>Criar Nova Lista</DialogTitle>
         <DialogContent>
@@ -260,30 +329,6 @@ const TodoPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <Dialog open={openItemDialog} onClose={() => setOpenItemDialog(false)}>
-        <DialogTitle>Adicionar Novo Item</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Texto do Item"
-            type="text"
-            fullWidth
-            value={newItemText}
-            onChange={(e) => setNewItemText(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenItemDialog(false)} color="primary">
-            Cancelar
-          </Button>
-          <Button onClick={handleAddTodoItem} color="primary">
-            Adicionar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
         <DialogTitle>Editar Lista</DialogTitle>
         <DialogContent>
@@ -314,7 +359,6 @@ const TodoPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={openConfirmDialog}
         onClose={() => setOpenConfirmDialog(false)}
@@ -335,26 +379,45 @@ const TodoPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <Dialog open={openItemDialog} onClose={() => setOpenItemDialog(false)}>
-        <DialogTitle>Adicionar Novo Item</DialogTitle>
+      <Dialog
+        open={openEditItemDialog}
+        onClose={() => setOpenEditDialog(false)}
+      >
+        <DialogTitle>Editar Item</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Nome da Tarefa"
+            label="Nome do Item"
             type="text"
             fullWidth
-            value={newItemText}
-            onChange={(e) => setNewItemText(e.target.value)}
+            value={newItemName}
+            onChange={(e) => setNewItemName(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenItemDialog(false)} color="primary">
+          <Button onClick={() => setOpenEditDialog(false)} color="primary">
             Cancelar
           </Button>
-          <Button onClick={handleAddTodoItem} color="primary">
-            Adicionar
+          <Button onClick={handleSaveItemChanges} color="primary">
+            Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>Confirmar Exclusão</DialogTitle>
+        <DialogContent>
+          <Typography>Tem certeza de que deseja excluir este item?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={handleConfirmDeleteItem} color="primary">
+            Excluir
           </Button>
         </DialogActions>
       </Dialog>
